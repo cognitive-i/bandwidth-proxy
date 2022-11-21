@@ -1,0 +1,11 @@
+<html>
+
+<body>
+    {{if .Error}}Error: {{.Error}}<br />{{end}}
+    <form method="post">
+        Bitrate: <input type="number" name="bitrate" value="{{.Bitrate}}" /> bps
+        <input type="submit" value="Set" />
+    </form>
+</body>
+
+</html>
