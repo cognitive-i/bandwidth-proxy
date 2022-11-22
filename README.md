@@ -8,7 +8,7 @@ It was written by Cognitive-i Ltd and distributed under 3-clause BSD.  Suggestio
 # Installation
 
 ```
-go install github.com/cognitive-i/bandwidth-proxy/cmd/bandwidth-proxy
+go install github.com/cognitive-i/bandwidth-proxy/cmd/bandwidth-proxy@v1
 
 ```
 
