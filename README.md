@@ -5,12 +5,19 @@ It was written to help perform manual smoke tests of bitrate switching of a DASH
 
 It was written by Cognitive-i Ltd and distributed under 3-clause BSD.  Suggestions and improvements are most welcome.
 
+# Installation
+
+```
+go install github.com/cognitive-i/bandwidth-proxy/cmd/bandwidth-proxy
+
+```
+
 # Build and Test
 The tool is built with the standard Go manner:
 
 ```
 go mod download
-go build -o bandwidth-proxy ./cmd
+go build ./cmd/bandwidth-proxy
 ```
 
 The test cases can be run with either `go test` or [Ginkgo](https://onsi.github.io/ginkgo/#getting-started).  They take about 1.5 minutes to run because they use the wallclock and perform a number of samples to ensure things are stable.
