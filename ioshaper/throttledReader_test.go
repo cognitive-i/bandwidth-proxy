@@ -18,14 +18,14 @@ func getBuffer(size int) io.ReadCloser {
 
 var _ = Describe("ThrottledReader", func() {
 	DescribeTable("ThrottledReader",
-		func(bitrate uint64, bufferSize int, expectedDuration time.Duration) {
+		func(bitrate int, bufferSize int, expectedDuration time.Duration) {
 			tb := gmeasure.NewExperiment(fmt.Sprintf("%d bytes @ %d bps", bufferSize, bitrate))
 			AddReportEntry(tb.Name, tb)
 
 			tb.Sample(
 				func(idx int) {
 					source := getBuffer(bufferSize)
-					sut := ioshaper.NewThrottledReader(source, bitrate)
+					sut := ioshaper.NewThrottledReader(source, int64(bitrate))
 
 					tb.MeasureDuration("download", func() {
 						_, err := io.ReadAll(sut)
@@ -42,9 +42,9 @@ var _ = Describe("ThrottledReader", func() {
 			meanDuration := tb.GetStats("download").DurationFor(gmeasure.StatMean)
 			Expect(meanDuration).To(BeNumerically("~", expectedDuration, expectedDuration/10))
 		},
-		Entry("slow", uint64(1024), 256, 2*time.Second),
-		Entry("medium", uint64(1024*1024), 256*1024, 2*time.Second),
-		Entry("fast", uint64(10*1024*1024), 1024*1024, 800*time.Millisecond),
+		Entry("slow", 1024, 256, 2*time.Second),
+		Entry("medium", 1024*1024, 256*1024, 2*time.Second),
+		Entry("fast", 10*1024*1024, 1024*1024, 800*time.Millisecond),
 	)
 
 	It("should ensure a single transfer is shorter than 250ms", func() {

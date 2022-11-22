@@ -2,6 +2,8 @@ package proxy
 
 import (
 	"context"
+	"errors"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -12,31 +14,42 @@ import (
 )
 
 type config struct {
-	bitrate uint64
+	bitrate int64
 }
-type configOption func(c *config)
+type configOption func(c *config) error
 
-func (c *config) setOptions(configOptions []configOption) {
+func (c *config) setOptions(configOptions []configOption) error {
 	for _, option := range configOptions {
-		option(c)
+		if err := option(c); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func (c *config) GetMaxBitrate() uint64 {
-	return atomic.LoadUint64(&c.bitrate)
+func (c *config) GetMaxBitrate() int64 {
+	return atomic.LoadInt64(&c.bitrate)
 }
 
-func (c *config) SetMaxBitrate(bitrate uint64) {
-	atomic.StoreUint64(&c.bitrate, bitrate)
+func (c *config) SetMaxBitrate(bitrate int64) error {
+	if bitrate < 0 {
+		return errors.New("bitrate < 0")
+	}
+
+	atomic.StoreInt64(&c.bitrate, bitrate)
+	return nil
 }
 
-func SetMaxBitrate(bps uint) configOption {
-	return func(c *config) { c.SetMaxBitrate(uint64(bps)) }
+func SetMaxBitrate(bps int) configOption {
+	return func(c *config) error { return c.SetMaxBitrate(int64(bps)) }
 }
 
 func RunProxy(ctx context.Context, proxyListener, controlListener net.Listener, configOptions ...configOption) {
 	config := &config{}
-	config.setOptions(configOptions)
+	if err := config.setOptions(configOptions); err != nil {
+		log.Fatal("configuration error ", err)
+	}
 
 	if proxyListener != nil {
 		proxy := newProxyServer(config)
@@ -60,7 +73,7 @@ func newProxyServer(config *config) *http.Server {
 		Director: func(r *http.Request) {},
 		ModifyResponse: func(r *http.Response) error {
 			bitrate := config.GetMaxBitrate()
-			r.Header.Add("x-max-bitrate", strconv.FormatUint(bitrate, 10))
+			r.Header.Add("x-max-bitrate", strconv.FormatInt(bitrate, 10))
 
 			if bitrate > 0 {
 				r.Body = ioshaper.NewThrottledReader(r.Body, bitrate)

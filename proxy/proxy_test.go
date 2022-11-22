@@ -57,12 +57,12 @@ var _ = Describe("Proxy", func() {
 		Expect(b, err).To(HaveLen(testChunkSize))
 	})
 
-	DescribeTable("should throttle when asked", func(bps uint, consume int) {
+	DescribeTable("should throttle when asked", func(bps int, consume int) {
 		go proxy.RunProxy(ctx, sutListener, nil, proxy.SetMaxBitrate(bps))
 
 		// ioshaper.Bitrate is unit tested elsewhere so acceptable for expectedDuration
-		expectedDuration := ioshaper.Bitrate(bps).TransferBytes(consume)
-		expectedBandwidthHeader := strconv.FormatUint(uint64(bps), 10)
+		expectedDuration := ioshaper.NewBitrate(bps).TransferBytes(consume)
+		expectedBandwidthHeader := strconv.Itoa(bps)
 
 		tb := gmeasure.NewExperiment(fmt.Sprintf("download rate @ %d bps", bps))
 		AddReportEntry(tb.Name, tb)
@@ -89,9 +89,9 @@ var _ = Describe("Proxy", func() {
 		medianDuration := tb.GetStats("download").DurationFor(gmeasure.StatMean)
 		Expect(medianDuration).To(BeNumerically("~", expectedDuration, expectedDuration/10))
 	},
-		Entry("1 Mbps", uint(1024*1024), 512*1024),
-		Entry("3 Mbps", uint(3*1024*1024), 1*1024*1024),
-		Entry("10 Mbps", uint(10*1024*1024), 3*1024*1024),
+		Entry("1 Mbps", 1024*1024, 512*1024),
+		Entry("3 Mbps", 3*1024*1024, 1*1024*1024),
+		Entry("10 Mbps", 10*1024*1024, 3*1024*1024),
 	)
 })
 

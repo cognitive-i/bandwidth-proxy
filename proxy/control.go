@@ -20,7 +20,7 @@ var htmlTemplate = template.Must(template.ParseFS(htmlFs, "html/*"))
 
 type htmlFields struct {
 	Error   string
-	Bitrate uint64
+	Bitrate int64
 }
 
 type controlServer struct {
@@ -50,13 +50,14 @@ func (cs *controlServer) GetPage(ctx *gin.Context) {
 func (cs *controlServer) SetConfig(ctx *gin.Context) {
 	ctx.Request.ParseForm()
 
-	status := http.StatusAccepted
+	status := http.StatusNotAcceptable
 	fields := htmlFields{}
-	if bitrate, err := strconv.ParseUint(ctx.Request.Form.Get("bitrate"), 10, 64); err == nil {
-		cs.config.SetMaxBitrate(bitrate)
-	} else {
-		status = http.StatusNotAcceptable
+	if bitrate, err := strconv.ParseInt(ctx.Request.Form.Get("bitrate"), 10, 64); err != nil {
 		fields.Error = err.Error()
+	} else if err := cs.config.SetMaxBitrate(bitrate); err != nil {
+		fields.Error = err.Error()
+	} else {
+		status = http.StatusAccepted
 	}
 
 	fields.Bitrate = cs.config.GetMaxBitrate()
@@ -72,9 +73,9 @@ func Client(controlAddress string) client {
 	return client(u.String())
 }
 
-func (c client) SetMaxBitrate(bandwidth uint) client {
+func (c client) SetMaxBitrate(bandwidth int) client {
 	v := url.Values{}
-	v.Set("bitrate", strconv.FormatUint(uint64(bandwidth), 10))
+	v.Set("bitrate", strconv.Itoa(bandwidth))
 
 	if r, err := http.PostForm(string(c), v); err != nil {
 		log.Fatal(err)

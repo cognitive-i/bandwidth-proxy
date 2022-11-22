@@ -15,7 +15,7 @@ func main() {
 	daemon := flag.Bool("service", false, "run proxy service")
 	proxyAddress := flag.String("proxy-address", ":8080", "address:port to listen on")
 	controlAddress := flag.String("control-address", ":8081", "address:port to listen on for HTML interface")
-	maxBitrate := flag.Uint("max-bitrate", 0, "constrain bps, 0 = unlimited")
+	maxBitrate := flag.Int("max-bitrate", 0, "constrain bps, 0 = unlimited")
 	flag.Parse()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), unix.SIGTERM, unix.SIGINT)

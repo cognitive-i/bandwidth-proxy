@@ -1,8 +1,10 @@
 package ioshaper
 
 import (
+	"errors"
 	"io"
 	"log"
+	"math"
 	"time"
 )
 
@@ -12,8 +14,8 @@ type throttledReader struct {
 	maxBufferSize int
 }
 
-func NewThrottledReader(source io.ReadCloser, bitrate uint64) io.ReadCloser {
-	br := Bitrate(bitrate)
+func NewThrottledReader(source io.ReadCloser, bitrate int64) io.ReadCloser {
+	br := NewBitrate(bitrate)
 
 	if br.IsZero() {
 		log.Fatal("ThrottledReader cannot be configured with 0 bps bitrate")
@@ -27,10 +29,14 @@ func NewThrottledReader(source io.ReadCloser, bitrate uint64) io.ReadCloser {
 		maxBufferSize = 1
 	}
 
+	if maxBufferSize > math.MaxInt {
+		panic(errors.New("maxBufferSize cannot be used for slice allocations"))
+	}
+
 	return &throttledReader{
 		source:        source,
 		bitrate:       br,
-		maxBufferSize: maxBufferSize,
+		maxBufferSize: int(maxBufferSize),
 	}
 }
 
